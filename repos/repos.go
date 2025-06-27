@@ -1,42 +1,59 @@
 package repos
 
 import (
+	"io"
 	"log"
-	"maps"
-	"sync"
+	"os/exec"
+	"regexp"
 
 	"jerobas.com/yepee/types"
-	"jerobas.com/yepee/utils"
 )
 
-var (
-	mu     sync.RWMutex
-	routes types.RoutesType
-)
+// var (
+// 	mu sync.RWMutex
+// )
 
-func GetRoutesVariable() types.RoutesType {
-	localRoutes := make(types.RoutesType)
+func GetTunnels() []types.ParsedPSResult {
+	cmd := exec.Command("bash", "-c", "ps -eo pid,args")
 
-	mu.RLock()
-	maps.Copy(localRoutes, routes)
-	mu.RUnlock()
-
-	return localRoutes
-}
-
-func LoadRoutesVariable() {
-	loadedRoutes, err := utils.ReadJSON("routes.json")
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatalf("Failed to load routes: %v", err)
+		log.Fatal(err)
 	}
 
-	mu.Lock()
-	routes = loadedRoutes
-	mu.Unlock()
-}
+	if err := cmd.Start(); err != nil {
+		log.Fatal(err)
+	}
 
-func AssignRoutesVariable(value types.RoutesType) {
-	mu.Lock()
-	routes = value
-	mu.Unlock()
+	result, err := io.ReadAll(stdout)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cmd.Wait(); err != nil {
+		log.Fatal(err)
+	}
+
+	// err = os.WriteFile("result.txt", result, 0064)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	test := regexp.MustCompile(`(?m)^\s+(\S+)\sssh -f -N -R (\d+)\:[a-z]+:(\d+)`)
+
+	matched := test.FindAllStringSubmatch(string(result), -1)
+
+	var matches []types.ParsedPSResult
+
+	for _, match := range matched {
+		matches = append(matches, types.ParsedPSResult{
+			PID:     match[1],
+			Command: match[2],
+		})
+	}
+
+	return matches
+
+	// mu.RLock()
+	// mu.RUnlock()
 }
