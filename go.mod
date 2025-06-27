@@ -1,4 +1,4 @@
-module jerobas.com/yepee
+module jerobas.com/ssh-tunnel-controller
 
 go 1.24.2
 

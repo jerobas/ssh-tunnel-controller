@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"jerobas.com/yepee/repos"
+	"jerobas.com/ssh-tunnel-controller/repos"
 )
 
 func main() {

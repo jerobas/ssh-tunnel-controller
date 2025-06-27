@@ -5,13 +5,14 @@ import (
 	"log"
 	"os/exec"
 	"regexp"
+	"sync"
 
-	"jerobas.com/yepee/types"
+	"jerobas.com/ssh-tunnel-controller/types"
 )
 
-// var (
-// 	mu sync.RWMutex
-// )
+var (
+	mu sync.RWMutex
+)
 
 func GetTunnels() []types.ParsedPSResult {
 	cmd := exec.Command("bash", "-c", "ps -eo pid,args")
@@ -21,6 +22,7 @@ func GetTunnels() []types.ParsedPSResult {
 		log.Fatal(err)
 	}
 
+	mu.RLock()
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
 	}
@@ -33,11 +35,7 @@ func GetTunnels() []types.ParsedPSResult {
 	if err := cmd.Wait(); err != nil {
 		log.Fatal(err)
 	}
-
-	// err = os.WriteFile("result.txt", result, 0064)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	mu.RUnlock()
 
 	test := regexp.MustCompile(`(?m)^\s+(\S+)\sssh -f -N -R (\d+)\:[a-z]+:(\d+)`)
 
@@ -53,7 +51,4 @@ func GetTunnels() []types.ParsedPSResult {
 	}
 
 	return matches
-
-	// mu.RLock()
-	// mu.RUnlock()
 }
