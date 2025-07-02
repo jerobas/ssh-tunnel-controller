@@ -1,18 +1,17 @@
 package types
 
 type ParsedPSResult struct {
-	Command string
-	PID     string
+	PID          int
+	InternalPort int
+	ExternalPort int
 }
 
-// type RouteTypeDTO struct {
-// 	Subpath string `json:"subpath" validate:"required"`
-// 	Port    int    `json:"port" validate:"required,gt=0"`
-// }
+type CreateTunnelDTO struct {
+	Name         string `json:"name" validate:"required"`
+	InternalPort int    `json:"internalPort" validate:"required,gt=0"`
+	ExternalPort int    `json:"externalPort" validate:"required,gt=0"`
+}
 
-// type RouteType struct {
-// 	Subpath string `json:"subpath" validate:"required"`
-// 	PID     int    `json:"pid" validate:"required,gt=0"`
-// }
-
-// type RoutesType map[int]RouteType
+type KillTunnelDTO struct {
+	PID int `json:"pid" validate:"required,gt=0"`
+}

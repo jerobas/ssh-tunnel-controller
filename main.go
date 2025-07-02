@@ -2,16 +2,18 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
 
-	"jerobas.com/ssh-tunnel-controller/repos"
+	"github.com/jerobas/territo/config"
+	"github.com/jerobas/territo/handlers"
 )
 
 func main() {
-	// http.HandleFunc("/", routes.GetRoute)
-	// http.HandleFunc("/create", routes.PostRoute)
+	config.LoadConfig()
 
-	// fmt.Println("Server running at http://localhost:8080")
-	// log.Fatal(http.ListenAndServe(":8080", nil))
+	http.HandleFunc("/", handlers.MainRoute)
 
-	fmt.Println(repos.GetTunnels())
+	fmt.Printf("Server running at http://localhost:%d\n", config.GetConfig().Port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.GetConfig().Port), nil))
 }
