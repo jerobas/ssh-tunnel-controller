@@ -1,0 +1,25 @@
+post_install() {
+  echo ">> Checking if user 'territo' exists..."
+
+  if ! getent passwd territo > /dev/null; then
+    echo ">> Creating system user 'territo'..."
+    useradd -r -s /usr/bin/nologin -d /nonexistent -c "User for SSH tunnel controller" territo
+  else
+    echo ">> User 'territo' already exists."
+  fi
+
+  # Optional: create the config directory if not present
+  if [ ! -d /etc/territo ]; then
+    mkdir -p /etc/territo
+    chown territo:territo /etc/territo
+    chmod 750 /etc/territo
+    echo ">> Created /etc/territo for config (you can place config.json here)"
+  fi
+}
+
+post_remove() {
+  echo ">> Note: The 'territo' user and config folder are not removed automatically."
+  echo ">> If you want to fully remove them:"
+  echo "   sudo userdel -r territo"
+  echo "   sudo rm -rf /etc/territo"
+}

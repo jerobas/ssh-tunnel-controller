@@ -1,0 +1,22 @@
+pkgname=territo
+pkgver=1.0
+pkgrel=1
+pkgdesc="Simple ssh tunnel controller"
+arch=('x86_64')
+url="https://github.com/jerobas/territo"
+license=('GPL-3.0-or-later')
+depends=('openssh')
+makedepends=('go>=1.24.2')
+source=("git+$url.git#tag=v$pkgver")
+sha256sums=('SKIP')
+
+install=../../territo.install
+
+build() {
+  cd "$srcdir/$pkgname"
+  go build -o territo .
+}
+
+package() {
+  install -Dm755 "$srcdir/$pkgname/territo" "$pkgdir/usr/local/bin/territo"
+}

@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -22,9 +23,14 @@ func LoadConfig() {
 
 	if _, err := os.Stat(path); err == nil {
 		file, err := os.Open(path)
-		if err == nil {
-			defer file.Close()
-			json.NewDecoder(file).Decode(&config) // be sure to add validation later
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to open config file: %v\n", err)
+			return // keep defaults
+		}
+		defer file.Close()
+
+		if err := json.NewDecoder(file).Decode(&config); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to parse config file: %v\n", err)
 		}
 	}
 }

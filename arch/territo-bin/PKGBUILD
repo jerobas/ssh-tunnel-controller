@@ -1,0 +1,16 @@
+pkgname=territo-bin
+pkgver=1.0
+pkgrel=1
+pkgdesc="Simple ssh tunnel controller (prebuilt binary)"
+arch=('x86_64')
+url="https://github.com/jerobas/territo"
+license=('GPL-3.0-or-later')
+depends=('openssh')
+source=("$url/releases/download/v$pkgver/territo")
+sha256sums=('SKIP')
+
+install=../../territo.install
+
+package() {
+  install -Dm755 "$srcdir/territo" "$pkgdir/usr/local/bin/territo"
+}
