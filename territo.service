@@ -1,0 +1,20 @@
+[Unit]
+Description=Simple SSH Tunnel Controller
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/territo
+WorkingDirectory=/usr/local/bin
+Restart=on-failure
+RestartSec=5
+User=territo
+Group=territo
+
+Environment=GOTRACEBACK=all
+
+# Optional: override config file if you load from /etc/myapp/config.json
+# ExecStart=/usr/local/bin/ssh-tunnel-controller --config /etc/myapp/config.json
+
+[Install]
+WantedBy=multi-user.target
