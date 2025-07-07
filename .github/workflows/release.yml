@@ -35,6 +35,8 @@ jobs:
   build-packages:
     uses: jerobas/arch-repo/.github/workflows/build.yml@main
     needs: build-and-release
+    with:
+      caller_repo: ${{ github.repository }}
 
   upload-packages:
     runs-on: ubuntu-latest
