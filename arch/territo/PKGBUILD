@@ -10,7 +10,7 @@ makedepends=('go>=1.24.2')
 source=("git+$url.git#tag=v$pkgver")
 sha256sums=('SKIP')
 
-install=../../territo.install
+install=territo.install
 
 build() {
   cd "$srcdir/$pkgname"
@@ -18,5 +18,6 @@ build() {
 }
 
 package() {
-  install -Dm755 "$srcdir/$pkgname/territo" "$pkgdir/usr/local/bin/territo"
+  install -Dm755 "$srcdir/territo" "$pkgdir/usr/lib/territo/territo"
+  install -Dm644 "$srcdir/$pkgname/arch/territo.service" "$pkgdir/usr/lib/systemd/system/territo.service"
 }

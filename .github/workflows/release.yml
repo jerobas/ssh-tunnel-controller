@@ -6,23 +6,72 @@ on:
       - 'v*'  # Only run when a tag like v1.0, v2.0.1, etc. is pushed to main
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
+    container:
+      image: archlinux:base
 
     steps:
+      - name: Install base dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm base-devel git curl openssh go
+
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'  # Or 1.24 if you prefer
+          go-version: '1.24'
+
+      - name: Prepare GitHub release tag variable
+        id: vars
+        run: echo "TAG=${GITHUB_REF##*/}" >> "$GITHUB_OUTPUT"
 
       - name: Build binary and release
         run: |
-          git fetch --tags
-          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
           go build -o territo
-          gh release create $latest_tag --generate-notes territo
+          gh release create "${{ steps.vars.outputs.TAG }}" --generate-notes territo
+        env:
+           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Prepare AUR packages
+        run: |
+          # Create a non-root user for makepkg
+          useradd -m builduser
+          echo 'builduser ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+          # Give it permission to write to the repo
+          chown -R builduser:builduser .
+
+          # Then run the package loop as that user
+          sudo -u builduser bash <<EOF
+            mkdir -p dist
+            for dir in arch/*; do
+              [[ -d "\$dir" ]] || continue
+
+              name=\$(basename "\$dir")
+
+              cp arch/*.install "\$dir" 2>/dev/null || true
+              cp arch/*.service "\$dir" 2>/dev/null || true
+
+              pushd "\$dir"
+
+              if [[ "\$name" == *-bin ]]; then
+                makepkg -f --noconfirm
+                cp *.pkg.tar.zst ../../dist/
+              else
+                makepkg --source --noconfirm
+                cp *.tar.gz ../../dist/
+              fi
+
+              popd
+            done
+          EOF
+
+      - name: Build binary and release
+        run: |
+          gh release upload "${{ steps.vars.outputs.TAG }}" dist/*
         env:
            GH_TOKEN: ${{ secrets.GH_TOKEN }}

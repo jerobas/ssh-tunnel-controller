@@ -9,8 +9,9 @@ depends=('openssh')
 source=("$url/releases/download/v$pkgver/territo")
 sha256sums=('SKIP')
 
-install=../../territo.install
+install=territo.install
 
 package() {
-  install -Dm755 "$srcdir/territo" "$pkgdir/usr/local/bin/territo"
+  install -Dm755 "$srcdir/territo" "$pkgdir/usr/lib/territo/territo"
+  install -Dm644 "$srcdir/../territo.service" "$pkgdir/usr/lib/systemd/system/territo.service"
 }

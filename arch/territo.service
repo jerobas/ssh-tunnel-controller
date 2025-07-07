@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/territo
-WorkingDirectory=/usr/local/bin
+ExecStart=/usr/lib/territo/territo
+WorkingDirectory=/usr/lib/territo
 Restart=on-failure
 RestartSec=5
 
