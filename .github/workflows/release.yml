@@ -15,7 +15,7 @@ jobs:
       - name: Install base dependencies
         run: |
           pacman -Syu --noconfirm
-          pacman -S --noconfirm base-devel git curl openssh go
+          pacman -S --noconfirm base-devel git curl openssh go github-cli
 
       - name: Checkout code
         uses: actions/checkout@v4
