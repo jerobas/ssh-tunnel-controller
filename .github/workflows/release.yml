@@ -50,8 +50,7 @@ jobs:
           path: dist
 
       - name: Upload packages to GitHub Release
-        run: |
-          gh release upload "${{ needs.build-and-release.outputs.tag }}" dist/*
+        run: gh release upload "${{ needs.build-and-release.outputs.tag }}" dist/* --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
@@ -59,7 +58,7 @@ jobs:
     uses: jerobas/arch-repo/.github/workflows/publish.yml@main
     needs: [upload-packages, build-and-release]
     with:
-      release_repo: jerobas/territo
+      release_repo: ${{ github.repository }}
       release_tag: ${{ needs.build-and-release.outputs.tag }}
     secrets:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
