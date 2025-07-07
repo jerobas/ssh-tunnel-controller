@@ -31,7 +31,7 @@ jobs:
 
       - name: Build binary and release
         run: |
-          go build -o territo
+          go build -buildvcs=false -o territo
           gh release create "${{ steps.vars.outputs.TAG }}" --generate-notes territo
         env:
            GH_TOKEN: ${{ secrets.GH_TOKEN }}
