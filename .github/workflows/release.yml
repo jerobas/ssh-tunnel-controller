@@ -1,4 +1,4 @@
-name: Release Territo Binary
+name: Release Territo binary and packages
 
 on:
   push:
@@ -8,6 +8,9 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+
+    outputs:
+      tag: ${{ steps.vars.outputs.TAG }}
 
     steps:
       - name: Checkout code
@@ -22,25 +25,39 @@ jobs:
         with:
           go-version: '1.24'
 
-      - name: Build binary and release
+      - name: Build binary and create release
         run: |
           go build -buildvcs=false -o territo
           gh release create "${{ steps.vars.outputs.TAG }}" --generate-notes territo
         env:
-           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      - name: Build arch packages
-        uses: jerobas/arch-repo/.github/workflows/build.yml@main
-
-      - name: Release packages
-        run: |
-          gh release upload "${{ steps.vars.outputs.TAG }}" dist/*
-        env:
-           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      - name: Add packages to arch repo
-        uses: jerobas/arch-repo/.github/workflows/publish.yml@main
-        with:
-          release_repo: jerobas/territo
-          release_tag: ${{ steps.vars.outputs.TAG }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  build-packages:
+    uses: jerobas/arch-repo/.github/workflows/build.yml@main
+    needs: build-and-release
+
+  upload-packages:
+    runs-on: ubuntu-latest
+    needs: [build-packages, build-and-release]
+
+    steps:
+      - name: Download built packages
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Upload packages to GitHub Release
+        run: |
+          gh release upload "${{ needs.build-and-release.outputs.tag }}" dist/*
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  publish-to-repo:
+    uses: jerobas/arch-repo/.github/workflows/publish.yml@main
+    needs: [upload-packages, build-and-release]
+    with:
+      release_repo: jerobas/territo
+      release_tag: ${{ needs.build-and-release.outputs.tag }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
