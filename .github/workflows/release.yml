@@ -3,38 +3,24 @@ name: Release Territo Binary
 on:
   push:
     tags:
-      - 'v*'  # Only run when a tag like v1.0, v2.0.1, etc. is pushed to main
+      - 'v*'
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    container:
-      image: archlinux:base
 
     steps:
-      - name: Install base dependencies
-        run: |
-          pacman -Syu --noconfirm
-          pacman -S --noconfirm base-devel git curl openssh go github-cli
-
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - run: echo "$GITHUB_WORKSPACE"
-  
-      - name: Make repo safe
-        run: |
-          echo "Workspace: $GITHUB_WORKSPACE"
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Prepare GitHub release tag variable
+        id: vars
+        run: echo "TAG=${GITHUB_REF##*/}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-
-      - name: Prepare GitHub release tag variable
-        id: vars
-        run: echo "TAG=${GITHUB_REF##*/}" >> "$GITHUB_OUTPUT"
 
       - name: Build binary and release
         run: |
@@ -43,42 +29,18 @@ jobs:
         env:
            GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Prepare AUR packages
-        run: |
-          # Create a non-root user for makepkg
-          useradd -m builduser
-          echo 'builduser ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+      - name: Build arch packages
+        uses: jerobas/arch-repo/.github/workflows/build.yml@main
 
-          # Give it permission to write to the repo
-          chown -R builduser:builduser .
-
-          # Then run the package loop as that user
-          sudo -u builduser bash <<EOF
-            mkdir -p dist
-            for dir in arch/*; do
-              [[ -d "\$dir" ]] || continue
-
-              name=\$(basename "\$dir")
-
-              cp arch/*.install "\$dir" 2>/dev/null || true
-              cp arch/*.service "\$dir" 2>/dev/null || true
-
-              pushd "\$dir"
-
-              if [[ "\$name" == *-bin ]]; then
-                makepkg -f --noconfirm
-                cp *.pkg.tar.zst ../../dist/
-              else
-                makepkg --source --noconfirm
-                cp *.tar.gz ../../dist/
-              fi
-
-              popd
-            done
-          EOF
-
-      - name: Build binary and release
+      - name: Release packages
         run: |
           gh release upload "${{ steps.vars.outputs.TAG }}" dist/*
         env:
            GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Add packages to arch repo
+        uses: jerobas/arch-repo/.github/workflows/publish.yml@main
+        with:
+          release_repo: jerobas/territo
+          release_tag: ${{ steps.vars.outputs.TAG }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
